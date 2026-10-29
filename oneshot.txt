@@ -1,0 +1,41 @@
+Create a job application tracker
+
+The purpose is to save job descriptions and keep track of which jobs an applicant has applied to, the applicant is the only user of the application, so multi-user logic is skipped.
+
+Application has one page: the table of entries, with a bar at the top.
+
+User flow for adding a new entry:
+- User simply enters the url of the job description into the bar. The name is automatically gleaned from the title of the webpage. A pdf printout of the page is automatically saved to disk using puppeteer.
+
+Additional features:
+- Users can edit the currently existing entries
+
+Stack:
+- Express
+- Puppeteer
+- EJS templated frontend
+- SQLite
+
+Proposed Schema
+
+id: INTEGER PK
+name: TEXT
+applied_on: TIMESTAMP
+last_updated: TIMESTAMP
+link: TEXT
+comments: TEXT
+status: FK application_result DEFAULT "waiting"
+snapshot: FK file_entry
+
+application_result (waiting, rejected)
+id: INTEGER PK
+result: TEXT
+
+file_entry:
+id: INTEGER PK
+mime_type: TEXT
+created_at: TIMESTAMP
+bytes: INTEGER
+storage_path: TEXT
+
+
