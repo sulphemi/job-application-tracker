@@ -1,0 +1,31 @@
+<%- include('partials/header', { title: 'Edit application' }) %>
+  <div class="page-heading">
+    <div><p class="eyebrow">Application details</p><h1>Edit application</h1></div>
+    <a href="/">← Back to applications</a>
+  </div>
+  <% if (error) { %><div class="notice error" role="alert"><%= error %></div><% } %>
+  <form class="card form-grid" action="/applications/<%= application.id %>/edit" method="post" enctype="multipart/form-data">
+    <label class="full">Name
+      <input name="name" value="<%= application.name %>" maxlength="300" required>
+    </label>
+    <label class="full">Job URL
+      <input name="link" type="url" value="<%= application.link %>" required>
+    </label>
+    <label>Applied on
+      <input name="created_at" type="datetime-local" value="<%= new Date(application.created_at).toISOString().slice(0, 16) %>" required>
+    </label>
+    <label>Status
+      <select name="status_id" required>
+        <% statuses.forEach(status => { %><option value="<%= status.id %>" <%= status.id === application.status_id ? 'selected' : '' %>><%= status.result %></option><% }) %>
+      </select>
+    </label>
+    <label class="full">Comments
+      <textarea name="comments" rows="6" maxlength="10000"><%= application.comments %></textarea>
+    </label>
+    <label class="full">Replace snapshot <span class="optional">(optional)</span>
+      <input name="snapshot" type="file" accept="application/pdf,image/png,image/jpeg,image/gif,image/webp">
+      <small>The existing snapshot stays linked unless you upload a replacement. PDF, PNG, JPEG, GIF, or WebP; up to 10 MB.</small>
+    </label>
+    <div class="full form-actions"><button type="submit">Save changes</button><a class="button secondary" href="/">Cancel</a></div>
+  </form>
+<%- include('partials/footer') %>

@@ -1,0 +1,71 @@
+<%- include('partials/header', { title: 'Applications' }) %>
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Your search, in one place</p>
+      <h1>Applications</h1>
+      <p class="muted">Save a job listing and keep its details and snapshot close at hand.</p>
+    </div>
+    <form class="capture-form" action="/applications" method="post">
+      <label for="link">Job-description URL</label>
+      <div class="input-action">
+        <input id="link" name="link" type="url" placeholder="https://company.example/jobs/123" required>
+        <button type="submit">Save job</button>
+      </div>
+    </form>
+  </section>
+
+  <% if (message) { %><div class="notice success" role="status"><%= message %></div><% } %>
+  <% if (error) { %><div class="notice error" role="alert"><%= error %></div><% } %>
+
+  <% if (captureFailure) { %>
+    <section class="card fallback" aria-labelledby="fallback-title">
+      <h2 id="fallback-title">Finish saving this application</h2>
+      <p>The automatic snapshot did not work. Add a clear name and upload a PDF or image of the listing instead.</p>
+      <form action="/applications/manual" method="post" enctype="multipart/form-data" class="form-grid">
+        <label>Entry name
+          <input name="name" value="<%= captureFailure.name %>" maxlength="300" required>
+        </label>
+        <label>Job URL
+          <input name="link" type="url" value="<%= captureFailure.link %>" required>
+        </label>
+        <label class="full">Replacement snapshot
+          <input name="snapshot" type="file" accept="application/pdf,image/png,image/jpeg,image/gif,image/webp" required>
+          <small>PDF, PNG, JPEG, GIF, or WebP; up to 10 MB.</small>
+        </label>
+        <div class="full"><button type="submit">Save application</button></div>
+      </form>
+    </section>
+  <% } %>
+
+  <section aria-labelledby="saved-title">
+    <div class="section-heading">
+      <h2 id="saved-title">Saved applications</h2>
+      <span class="count"><%= applications.length %></span>
+    </div>
+    <% if (applications.length === 0) { %>
+      <div class="empty-state">
+        <h3>No applications yet</h3>
+        <p>Paste a job-description URL above to save your first one.</p>
+      </div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Role</th><th>Status</th><th>Applied on</th><th>Last updated</th><th>Comments</th><th>Snapshot</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+          <% applications.forEach(application => { %>
+            <tr>
+              <td data-label="Role"><a class="role-link" href="<%= application.link %>" target="_blank" rel="noopener noreferrer"><%= application.name %></a><span class="url"><%= application.link %></span></td>
+              <td data-label="Status"><span class="status"><%= application.status %></span></td>
+              <td data-label="Applied on"><time datetime="<%= application.created_at %>"><%= new Date(application.created_at).toLocaleString() %></time></td>
+              <td data-label="Last updated"><time datetime="<%= application.last_updated %>"><%= new Date(application.last_updated).toLocaleString() %></time></td>
+              <td data-label="Comments" class="comments"><%= application.comments || '—' %></td>
+              <td data-label="Snapshot"><% if (application.snapshot_id) { %><a href="/files/<%= application.snapshot_id %>" target="_blank">View <%= application.snapshot_mime === 'application/pdf' ? 'PDF' : 'image' %></a><% } else { %>—<% } %></td>
+              <td class="actions"><a class="button secondary" href="/applications/<%= application.id %>/edit">Edit</a></td>
+            </tr>
+          <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </section>
+<%- include('partials/footer') %>

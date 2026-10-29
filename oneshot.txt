@@ -1,41 +1,95 @@
-Create a job application tracker
+Build a complete, locally runnable job application tracker.
 
-The purpose is to save job descriptions and keep track of which jobs an applicant has applied to, the applicant is the only user of the application, so multi-user logic is skipped.
+Purpose
 
-Application has one page: the table of entries, with a bar at the top.
+The application lets a single user save job descriptions and track the outcome of applications. There is no authentication or multi-user logic.
 
-User flow for adding a new entry:
-- User simply enters the url of the job description into the bar. The name is automatically gleaned from the title of the webpage. A pdf printout of the page is automatically saved to disk using puppeteer.
+Technology stack
 
-Additional features:
-- Users can edit the currently existing entries
+- Node.js with Express
+- Puppeteer for webpage metadata extraction and PDF snapshots
+- EJS templates for server-rendered pages
+- SQLite for persistence
+- Local disk storage for uploaded and generated files
 
-Stack:
-- Express
-- Puppeteer
-- EJS templated frontend
-- SQLite
+Core pages
 
-Proposed Schema
+1. Applications page
+   - This is the main page and displays all job application entries in a table.
+   - Include a bar at the top where the user can enter a job-description URL and submit it.
+   - Show each entry's name, URL, status, creation timestamp labeled "Applied on", last-updated timestamp, comments, and linked snapshot.
+   - Provide an edit action for each entry.
 
-id: INTEGER PK
-name: TEXT
-applied_on: TIMESTAMP
-last_updated: TIMESTAMP
-link: TEXT
-comments: TEXT
-status: FK application_result DEFAULT "waiting"
-snapshot: FK file_entry
+2. Status management page
+   - Display all possible application statuses.
+   - Allow the user to add, rename, and delete statuses.
+   - Seed the database with `waiting` and `rejected`.
+   - New applications default to `waiting`.
+   - Do not allow a status to be deleted while any application uses it. Show a clear validation message instead.
 
-application_result (waiting, rejected)
-id: INTEGER PK
-result: TEXT
+Adding an application
 
-file_entry:
-id: INTEGER PK
-mime_type: TEXT
-created_at: TIMESTAMP
-bytes: INTEGER
-storage_path: TEXT
+1. The user enters a job-description URL in the bar on the applications page.
+2. Validate that the value is an HTTP or HTTPS URL.
+3. Use Puppeteer to load the URL.
+4. Derive the entry name from the webpage title. If no usable title is available, use the hostname or another clear fallback.
+5. Attempt to save a PDF printout of the page to local disk.
+6. Create the application entry with:
+   - `created_at` set to the current timestamp; label this field "Applied on" in the frontend.
+   - `last_updated` set to the current timestamp.
+   - status set to `waiting`.
+7. If metadata extraction or PDF capture fails because the page is blocked, requires authentication, times out, or otherwise cannot be rendered, do not silently discard the user's work. Present a form that lets the user provide or edit the entry name and upload a replacement snapshot. Accept PDF and common image formats. Save the entry once the required information is available, and show a clear explanation of the capture failure.
 
+Editing an application
 
+- Allow the user to edit the name, URL, creation timestamp, status, and comments.
+- Update `last_updated` whenever an entry is changed.
+- Do not offer an option to remove a linked file.
+- Allow an existing linked file to be replaced with a PDF or common image file.
+- When a linked file is replaced, update the database reference and safely remove the old local file after the replacement succeeds.
+- There is no requirement to delete application entries.
+
+File behavior
+
+- Store generated PDFs and uploaded files outside the public static directory.
+- Serve files through an application route with the correct MIME type.
+- Generate unique storage names; do not trust uploaded filenames as storage paths.
+- Validate upload MIME type and file size.
+- Accept PDF, PNG, JPEG, GIF, and WebP uploads.
+- Prevent path traversal and avoid exposing arbitrary local files.
+
+Database schema
+
+Use an equivalent normalized SQLite schema with foreign keys enabled:
+
+application_entry
+- id: INTEGER PRIMARY KEY
+- name: TEXT NOT NULL
+- created_at: TIMESTAMP NOT NULL
+- last_updated: TIMESTAMP NOT NULL
+- link: TEXT NOT NULL
+- comments: TEXT NOT NULL DEFAULT ''
+- status_id: INTEGER NOT NULL REFERENCES application_result(id)
+- snapshot_id: INTEGER NULL REFERENCES file_entry(id)
+
+application_result
+- id: INTEGER PRIMARY KEY
+- result: TEXT NOT NULL UNIQUE
+
+file_entry
+- id: INTEGER PRIMARY KEY
+- mime_type: TEXT NOT NULL
+- created_at: TIMESTAMP NOT NULL
+- bytes: INTEGER NOT NULL
+- storage_path: TEXT NOT NULL UNIQUE
+
+Implementation expectations
+
+- Include all source files, templates, styles, schema/migrations, and seed logic required to run the application.
+- Add a README with setup and run instructions, including Puppeteer prerequisites if needed.
+- Use parameterized SQL queries and server-side validation.
+- Handle expected errors with useful user-facing messages rather than raw stack traces.
+- Use transactions where an operation changes both database records and stored files.
+- Keep the interface clean, responsive, and accessible without relying on a prescribed visual design.
+- Add automated tests for the important application, status-management, validation, and file-replacement flows.
+- Ensure the project can be installed and run using standard npm commands.

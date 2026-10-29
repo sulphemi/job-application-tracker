@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · Job Application Tracker</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">Job Application Tracker</a>
+    <nav aria-label="Main navigation">
+      <a href="/" <%- title === 'Applications' ? 'aria-current="page"' : '' %>>Applications</a>
+      <a href="/statuses" <%- title === 'Statuses' ? 'aria-current="page"' : '' %>>Statuses</a>
+    </nav>
+  </header>
+  <main class="container">
